@@ -1,0 +1,65 @@
+ .container {
+    padding: 24px;
+    min-height: 100vh;
+    background: #f5f5f5;
+  }
+  
+  .header {
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  
+  .title {
+    color: #333;
+    margin: 0;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .titleIcon {
+    color: #1890ff;
+  }
+  
+  .addButton {
+    display: inline-flex;
+    align-items: center;
+  }
+  
+  .tableContainer {
+    background: white;
+    border-radius: 4px;
+    padding: 16px;
+  }
+  
+  .modalForm {
+    margin-top: 16px;
+  }
+  
+  .formItem {
+    margin-bottom: 16px;
+  }
+  
+  @media (max-width: 768px) {
+    .container {
+      padding: 16px;
+    }
+  
+    .header {
+      flex-direction: column;
+    }
+  
+    .title {
+      font-size: 24px;
+    }
+  
+    .addButton {
+      width: 100%;
+    }
+  }
+  
