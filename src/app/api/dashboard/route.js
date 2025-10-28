@@ -151,6 +151,7 @@ export async function GET(request) {
       id: funcionario.id,
       nome: funcionario.nome,
       cargo: funcionario.cargo,
+      salario: funcionario.salario,
       franquia: funcionario.franquia?.nome || "N/A",
       createdAt: funcionario.createdAt,
     }));
