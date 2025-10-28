@@ -171,7 +171,8 @@ export async function GET(request) {
     //funcionarios sem franquia
     const funcionariosSemFranquia = [];
     funcionarios.forEach((funcionario) => {
-      if (funcionario.franquia.length === 0) {
+      // when including franquia via select, franquia will be an object or null
+      if (!funcionario.franquia) {
         funcionariosSemFranquia.push({
           id: funcionario.id,
           nome: funcionario.nome,
@@ -183,17 +184,26 @@ export async function GET(request) {
     });
 
     //retornar o objeto com todas as informacoes do dashboard
+    // normalize keys to match frontend expectations
+    const topFranquias = todasFranquias.slice(0, 5).map((f) => ({
+      id: f.id,
+      nome: f.nome,
+      cidade: f.cidade,
+      totalFuncionarios: f.totalFuncionarios,
+      folhaSalarial: f.totalSalario,
+    }));
+
     const dashboard = {
       totalFranquias,
       totalFuncionarios,
       somaSalarios: Number(somaSalarios.toFixed(2)),
       salarioMedio: Number(salarioMedio.toFixed(2)),
-      cidades,
-      cargos,
-      faixaSalarial,
-      top5Franquias,
-      ultimas5Franquia,
-      ultimos5Funcionarios,
+      franquiasPorCidade: cidades,
+      funcionariosPorCargo: cargos,
+      faixasSalariais: faixaSalarial,
+      topFranquias,
+      ultimasFranquias: ultimas5Franquia,
+      ultimosFuncionarios: ultimos5Funcionarios,
       franquiasSemFuncionarios,
       funcionariosSemFranquia,
     };

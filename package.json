@@ -16,7 +16,8 @@
     "prisma": "^6.17.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "react-input-mask": "^2.0.4"
+    "react-input-mask": "^2.0.4",
+    "recharts": "^3.3.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
