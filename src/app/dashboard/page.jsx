@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, Row, Col, Table, Statistic, Spin, message, Alert } from 'antd'
+import { Card, Row, Col, Table, Statistic, Spin, message, Alert, Button, Modal, Radio, Select, Space } from 'antd'
 import {
   DashboardOutlined,
   ShopOutlined,
@@ -20,13 +20,23 @@ import {
   PieChart,
   Pie,
   Cell,
-  ResponsiveContainer
+  ResponsiveContainer,
+  Line,
+  Legend
 } from 'recharts'
 import styles from './dashboard.module.css'
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [dashboardData, setDashboardData] = useState(null)
+  const [showCargosModal, setShowCargosModal] = useState(false)
+  const [labelMode, setLabelMode] = useState('percent') // 'none' | 'percent'
+  const [precision, setPrecision] = useState(0)
+
+  // prepare cargos list for chart and modal (defensive)
+  const cargosList = Array.isArray(dashboardData?.funcionariosPorCargo)
+    ? dashboardData.funcionariosPorCargo.slice().sort((a, b) => b.total - a.total)
+    : []
 
   // ==========================================
   // CARREGAR DADOS DA API
@@ -300,7 +310,7 @@ export default function DashboardPage() {
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={dashboardData.funcionariosPorCargo || []}
+                  data={dashboardData.funcionariosPorCargo}
                   cx="50%"
                   cy="50%"
                   outerRadius={100}
@@ -308,7 +318,7 @@ export default function DashboardPage() {
                   dataKey="total"
                   label={({ cargo, total }) => `${cargo}: ${total}`}
                 >
-                  {Array.isArray(dashboardData.funcionariosPorCargo) && dashboardData.funcionariosPorCargo.map((entry, index) => (
+                  {dashboardData.funcionariosPorCargo.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>

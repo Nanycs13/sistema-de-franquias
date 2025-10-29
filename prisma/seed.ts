@@ -8,36 +8,42 @@ async function main() {
   await prisma.funcionario.deleteMany()
   await prisma.franquia.deleteMany()
 
-  console.log('🏗️ Criando franquias e funcionários...')
+  console.log('Criando franquias e funcionários...')
 
-for (let i = 0; i < 10; i++) {
-  const franquia = await prisma.franquia.create({
-    data: {
-      nome: `TechStore ${faker.location.city()}`,
-      cidade: faker.location.city(),
-      endereco: faker.location.streetAddress(),
-      telefone: faker.phone.number({ style: 'national' }),
-      funcionarios: {
-        create: Array.from({ length: 5 }).map(() => ({
-          nome: faker.person.fullName(),
-          email: faker.internet.email(),
-          cargo: faker.person.jobTitle(),
-          salario: faker.number.float({ min: 2000, max: 12000, fractionDigits: 2 }),
-        })),
+  // Lista de cargos fixos
+  const cargosBase = ['Gestor', 'Financeiro', 'Recursos Humanos', 'Vendas', 'Suporte Técnico']
+
+  let totalFuncionarios = 0
+
+  for (let i = 0; i < 10; i++) {
+    const franquia = await prisma.franquia.create({
+      data: {
+        nome: `TechStore ${faker.location.city()}`,
+        cidade: faker.location.city(),
+        endereco: faker.location.streetAddress(),
+        telefone: faker.phone.number({ style: 'national' }),
+        funcionarios: {
+          create: cargosBase.map((cargo) => ({
+            nome: faker.person.fullName(),
+            email: faker.internet.email(),
+            cargo,
+            salario: faker.number.float({ min: 2500, max: 10000, fractionDigits: 2 }),
+          })),
+        },
       },
-    },
-  })
+    })
 
-  console.log(`✅ Criada franquia: ${franquia.nome}`)
-}
+    totalFuncionarios += cargosBase.length
+    console.log(`Criada franquia: ${franquia.nome}`)
+  }
 
-
-  console.log('\n✨ Seed finalizado com sucesso!')
+  console.log('\nSeed finalizado com sucesso!')
+  console.log(`Total: 10 franquias e ${totalFuncionarios} funcionários criados.`)
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Erro ao rodar seed:', e)
+    console.error('Erro ao rodar seed:', e)
     process.exit(1)
   })
   .finally(async () => {
