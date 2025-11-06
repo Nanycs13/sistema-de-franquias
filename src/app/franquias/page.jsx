@@ -248,8 +248,9 @@ function Franquias() {
                     }}
                     rowKey="id"
                     pagination={{
-                        pageSize: 15,
+                        defaultPageSize: 15,
                         showSizeChanger: true,
+                        pageSizeOptions: ['10','15','20','50'],
                         showTotal: (total) => `Total de ${total} franquias`
                     }}
                     locale={{
