@@ -1,176 +1,312 @@
 'use client'
 
-  import { useState, useEffect } from 'react'
-  import { Button, Table, Modal, Form, Input, message, Space, Popconfirm } from 'antd'
-  import { ShopOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
-  import styles from './franquias.module.css'
-  import PhoneInput from '@/components/PhoneInput'
-  
-  export default function FranquiasPage() {
+import React, { useState, useEffect } from 'react'
+import styles from './franquias.module.css'
+import { Table, Modal, Button, Form, message, Input, Space, Popconfirm, Empty } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, ShopOutlined } from '@ant-design/icons'
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css'
+
+function Franquias() {
+
     const [franquias, setFranquias] = useState([])
     const [loading, setLoading] = useState(true)
     const [modalVisible, setModalVisible] = useState(false)
-    const [editandoId, setEditandoId] = useState(null)
     const [form] = Form.useForm()
-  
-    async function carregarFranquias() {
-      try {
-        setLoading(true)
-        const response = await fetch('/api/franquias')
-        const data = await response.json()
-        setFranquias(data)
-      } catch (error) {
-        message.error('Erro ao carregar franquias')
-      } finally {
-        setLoading(false)
-      }
+    const [editandoId, setEditandoId] = useState(null);
+    const [filtroNome, setFiltroNome] = useState('');
+
+    async function carregarFranquias(params) {
+        try {
+            setLoading(true)
+            const response = await fetch('/api/franquias')
+            if (response.ok) {
+                const data = await response.json()
+                setFranquias(data || [])
+                toast.success('Franquias carregadas com sucesso!')
+            } else {
+                const text = await response.text().catch(() => '')
+                console.error('Erro ao carregar franquias', text)
+                message.error('Erro ao carregar franquias')
+                toast.error('Erro ao carregar franquias')
+            }
+        } catch (error) {
+            console.error('Erro ao carregar franquias', error)
+            message.error('Erro ao carregar franquias')
+            toast.error('Erro ao carregar franquias')
+        } finally {
+            setLoading(false)
+        }
     }
-  
-    useEffect(() => {
-      carregarFranquias()
-    }, [])
-  
+
     async function salvarFranquia(values) {
-      try {
-        const url = editandoId ? `/api/franquias/${editandoId}` : '/api/franquias'
-        // sanitize telefone: send only digits
-        const payload = { ...values, telefone: (values.telefone || '').replace(/\D/g, '') }
-        const response = await fetch(url, {
-          method: editandoId ? 'PUT' : 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        })
-  
-        if (response.ok) {
-          message.success(`Franquia ${editandoId ? 'atualizada' : 'criada'} com sucesso!`)
-          setModalVisible(false)
-          form.resetFields()
-          setEditandoId(null)
-          carregarFranquias()
-        } else {
-          message.error('Erro ao salvar franquia')
+        try {
+            let url = ''
+            let tipo = ''
+            let msg = ''
+
+            if (editandoId) {
+                // PUT
+                url = `/api/franquias/${editandoId}`
+                tipo = 'PUT'
+                msg = 'Franquia atualizada com sucesso!'
+            } else {
+                //POST
+                url = '/api/franquias'
+                tipo = 'POST'
+                msg = 'Franquia adicionada com sucesso!'
+            }
+
+            // sanitize telefone to digits only
+            const payload = { ...values }
+            if (payload.telefone) payload.telefone = String(payload.telefone).replace(/\D/g, '')
+
+            const response = await fetch(url, {
+                method: tipo,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+
+            if (response.ok) {
+                setModalVisible(false)
+                form.resetFields()
+                const wasEditing = Boolean(editandoId)
+                setEditandoId(null)
+                await carregarFranquias()
+
+                if (wasEditing) {
+                    toast.success('Franquia editada')
+                } else {
+                    toast.success('Franquia cadastrada')
+                }
+            } else {
+                const err = await response.json().catch(() => ({ error: 'Erro' }))
+                message.error('Erro ao salvar franquia!')
+                toast.error(err.error || 'Erro ao salvar franquia!')
+            }
+
+        } catch (error) {
+            message.error('Erro ao salvar franquia.')
+            console.error('Erro ao salvar franquia', error)
+            toast.error('Erro ao salvar franquia.')
         }
-      } catch (error) {
-        message.error('Erro ao salvar franquia')
-      }
     }
-  
-    async function removerFranquia(id) {
-      try {
-        const response = await fetch(`/api/franquias/${id}`, { method: 'DELETE' })
-        if (response.ok) {
-          message.success('Franquia removida!')
-          carregarFranquias()
-        } else {
-          message.error('Erro ao remover franquia')
-        }
-      } catch (error) {
-        message.error('Erro ao remover franquia')
-      }
-    }
-  
+
     function editar(franquia) {
-      setEditandoId(franquia.id)
-      // format telefone for the form (if stored as digits)
-      const formatted = { ...franquia }
-      if (franquia.telefone) {
-        const d = franquia.telefone.replace(/\D/g, '')
-        if (d.length === 11) formatted.telefone = `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7,11)}`
-      }
-      form.setFieldsValue(formatted)
-      setModalVisible(true)
+        setEditandoId(franquia.id)
+        form.setFieldsValue(franquia)
+        setModalVisible(true)
     }
-  
-    const columns = [
-      { title: 'Nome', dataIndex: 'nome', key: 'nome' },
-      { title: 'Cidade', dataIndex: 'cidade', key: 'cidade' },
-      { title: 'Endereço', dataIndex: 'endereco', key: 'endereco' },
-      { title: 'Telefone', dataIndex: 'telefone', key: 'telefone' },
-      {
-        title: 'Funcionários',
-        dataIndex: ['_count', 'funcionarios'],
-        key: 'funcionarios_count',
-        render: (count) => count || 0
-      },
-      {
-        title: 'Ações',
-        key: 'acoes',
-        render: (_, record) => (
-          <Space>
-            <Button icon={<EditOutlined />} onClick={() => editar(record)} size="small" />
-            <Popconfirm
-              title="Confirma remover?"
-              onConfirm={() => removerFranquia(record.id)}
-              okText="Sim"
-              cancelText="Não"
-            >
-              <Button icon={<DeleteOutlined />} danger size="small" />
-            </Popconfirm>
-          </Space>
-        ),
-      }
+
+    async function removerFranquia(id) {
+        try {
+            const response = await fetch(`/api/franquias/${id}`, {
+                method: 'DELETE'
+            })
+            if (response.ok) {
+                message.success('Franquia removida')
+                await carregarFranquias()
+                toast.success('Franquia deletada!')
+            } else {
+                const data = await response.json().catch(() => ({ error: 'Erro' }))
+                message.error('Erro ao apagar franquia')
+                toast.error(data.error || 'Erro ao apagar franquia')
+            }
+        } catch (error) {
+            console.error('Erro ao apagar franquia', error)
+            toast.error('Erro ao apagar franquia!')
+        }
+    }
+
+    useEffect(() => {
+        carregarFranquias()
+    }, [])
+
+    const formatarTelefone = (telefone) => {
+        if (!telefone) return ''
+
+        const somenteNumeros = telefone.split('').filter(c => c >= '0' && c <= '9').join('')
+
+        const ddd = somenteNumeros.slice(0, 2)
+        const parte1 = somenteNumeros.length === 11
+            ? somenteNumeros.slice(2, 7)  // celular
+            : somenteNumeros.slice(2, 6)  // fixo
+        const parte2 = somenteNumeros.length === 11
+            ? somenteNumeros.slice(7)
+            : somenteNumeros.slice(6)
+
+        if (somenteNumeros.length < 10) return somenteNumeros
+
+        return `(${ddd}) ${parte1}-${parte2}`
+    }
+
+
+    const colunas = [
+        {
+            title: 'Nome',
+            dataIndex: 'nome',
+            key: 'nome'
+        },
+        {
+            title: 'Cidade',
+            dataIndex: 'cidade',
+            key: 'cidade'
+        },
+        {
+            title: 'Endereço',
+            dataIndex: 'endereco',
+            key: 'endereco'
+        },
+        {
+            title: 'Telefone',
+            dataIndex: 'telefone',
+            key: 'telefone',
+            render: (telefone) => formatarTelefone(telefone)
+        },
+        {
+            title: 'Ações',
+            key: 'acoes',
+            render: (_, franquia) => (
+                <Space>
+                    <Button
+                        icon={<EditOutlined />}
+                        size='small'
+                        onClick={() => editar(franquia)}
+                    />
+                    <Popconfirm
+                        title='Confirma remover?'
+                        onConfirm={() => removerFranquia(franquia.id)}
+                        okText="Sim"
+                        cancelText="Não"
+                    >
+                        <Button
+                            icon={<DeleteOutlined />}
+                            size='small'
+                            danger
+                        />
+                    </Popconfirm>
+
+                </Space>
+
+            )
+        }
     ]
-  
+
+    const showModal = () => {
+        setModalVisible(true);
+    };
+
+    const closeModal = () => {
+        setModalVisible(false)
+        form.resetFields()
+        setEditandoId(null)
+    }
+
+    const okModal = () => {
+        form.submit()
+    }
+
+    const franquiasFiltradas = franquias.filter(f => {
+        const pesquisa = filtroNome.toLowerCase();
+        return (
+            f.nome.toLowerCase().includes(pesquisa) || f.cidade.toLowerCase().includes(pesquisa) ||
+            f.endereco.toLowerCase().includes(pesquisa)
+        )
+    })
+
     return (
-      <div className={styles.container}>
-        <div className={styles.header}>
-          <h1 className={styles.title}>
-            <ShopOutlined className={styles.titleIcon} /> Franquias
-          </h1>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            className={styles.addButton}
-            onClick={() => setModalVisible(true)}
-          >
-            Adicionar
-          </Button>
+        <div className={styles.container}>
+            <ToastContainer position="top-right" autoClose={3000} />
+            <div className={styles.top}>
+                <h1 className={styles.title}> Franquias </h1>
+                <Button
+                    type='primary'
+                    icon={<PlusOutlined />}
+                    onClick={showModal}
+                    className={styles.addButton}
+                >
+                    Adicionar
+                </Button>
+            </div>
+            <div style={{ marginBottom: 16 }}>
+                <Input
+                    placeholder='Buscar franquia por nome ou cidade'
+                    prefix={<ShopOutlined />}
+                    value={filtroNome}
+                    onChange={(e) => setFiltroNome(e.target.value)}
+                    style={{ maxWidth: 400 }}
+                    allowClear
+                />
+            </div>
+            <div className={styles.tableContainer}>
+                <Table
+                    columns={colunas}
+                    dataSource={franquiasFiltradas}
+                    loading={{
+                        spinning: loading,
+                        tip: 'Carregando franquias, aguarde...'
+                    }}
+                    rowKey="id"
+                    pagination={{
+                        pageSize: 15,
+                        showSizeChanger: true,
+                        showTotal: (total) => `Total de ${total} franquias`
+                    }}
+                    locale={{
+                        emptyText: <Empty description="Nenhuma franquia encontrada" />
+                    }}
+                />
+            </div>
+
+            <Modal
+                title={editandoId ? 'Editar Franquia' : 'Adicionar Franquia'}
+                open={modalVisible}
+                onCancel={closeModal}
+                onOk={okModal}
+            >
+                    <Form
+                    form={form}
+                    layout='vertical'
+                    onFinish={salvarFranquia}
+                    className={styles.modalForm}
+                >
+                    <Form.Item name="nome" label="Digite o nome" rules={[{ required: true, message: 'Preecha o seu nome' }, { min: 3, message: 'Nome deve ter no min 3 caracteres' }]}>
+                        <Input />
+                    </Form.Item>
+
+                    <Form.Item name="cidade" label="Digite a cidade" rules={[{ required: true, message: 'Preecha sua cidade' }]}>
+                        <Input />
+                    </Form.Item>
+
+                    <Form.Item name="endereco" label="Digite o endereço" rules={[{ required: true, message: 'Preecha seu endereço' }]}>
+                        <Input />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="telefone"
+                        label="Digite o telefone"
+                        rules={[
+                            { required: true, message: 'Preecha o seu telefone' },
+                            {
+                                validator: (_, value) => {
+                                    if (!value) return Promise.reject(new Error(''))
+                                    const digits = String(value).replace(/\D/g, '')
+                                    if (digits.length < 10 || digits.length > 11) {
+                                        return Promise.reject(new Error('O telefone deve conter entre 10 e 11 dígitos!'))
+                                    }
+                                    return Promise.resolve()
+                                }
+                            }
+                        ]}
+                    >
+                        <Input maxLength={11} />
+                    </Form.Item>
+
+                </Form>
+            </Modal>
+
         </div>
-  
-        <div className={styles.tableContainer}>
-          <Table
-            columns={columns}
-            dataSource={franquias}
-            loading={loading}
-            rowKey="id"
-            pagination={{ pageSize: 10 }}
-          />
-        </div>
-  
-        <Modal
-          title={editandoId ? 'Editar Franquia' : 'Nova Franquia'}
-          open={modalVisible}
-          onCancel={() => {
-            setModalVisible(false)
-            setEditandoId(null)
-            form.resetFields()
-          }}
-          onOk={() => form.submit()}
-          okText="Salvar"
-          cancelText="Cancelar"
-        >
-          <Form form={form} layout="vertical" onFinish={salvarFranquia}>
-            <Form.Item name="nome" label="Nome" rules={[{ required: true, message: 'Campo obrigatório' }]}>
-              <Input />
-            </Form.Item>
-            <Form.Item name="cidade" label="Cidade" rules={[{ required: true, message: 'Campo obrigatório' }]}>
-              <Input />
-            </Form.Item>
-            <Form.Item name="endereco" label="Endereço" rules={[{ required: true, message: 'Campo obrigatório' }]}>
-              <Input />
-            </Form.Item>
-            <Form.Item name="telefone" label="Telefone" rules={[{ required: true, message: 'Campo obrigatório' }, { validator: (_, value) => {
-              if (!value) return Promise.reject('Campo obrigatório')
-              const digits = String(value).replace(/\D/g, '')
-              return digits.length === 11 ? Promise.resolve() : Promise.reject('Telefone inválido (formato: (71) 98765-4321)')
-            }}]}>
-              <PhoneInput
-                value={form.getFieldValue('telefone')}
-                onChange={(digits) => form.setFieldsValue({ telefone: digits })}
-              />
-            </Form.Item>
-          </Form>
-        </Modal>
-      </div>
     )
-  }
+}
+
+export default Franquias

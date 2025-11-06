@@ -1,65 +1,59 @@
- .container {
+.container {
     padding: 24px;
     min-height: 100vh;
     background: #f5f5f5;
-  }
-  
-  .header {
+}
+
+.top { 
     margin-bottom: 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
     gap: 16px;
-  }
-  
-  .title {
+}
+
+.title {
     color: #333;
     margin: 0;
     font-size: 28px;
     display: flex;
     align-items: center;
     gap: 10px;
-  }
-  
-  .titleIcon {
+}
+
+.titleIcon {
     color: #1890ff;
-  }
-  
-  .addButton {
-    display: inline-flex;
-    align-items: center;
-  }
-  
-  .tableContainer {
+}
+
+.tableContainer {
     background: white;
     border-radius: 4px;
     padding: 16px;
-  }
-  
-  .modalForm {
+}
+
+.modalForm {
     margin-top: 16px;
-  }
-  
-  .formItem {
+}
+
+.formItem {
     margin-bottom: 16px;
-  }
-  
-  @media (max-width: 768px) {
+}
+
+@media (max-width: 768px) {
     .container {
-      padding: 16px;
+        padding: 16px;
     }
-  
+
     .header {
-      flex-direction: column;
+        flex-direction: column;
     }
-  
+
     .title {
-      font-size: 24px;
+        font-size: 24px;
     }
-  
+
     .addButton {
-      width: 100%;
+        width: 100%;
     }
-  }
-  
+}
